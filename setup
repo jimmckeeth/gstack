@@ -31,6 +31,7 @@ esac
 HOST="claude"
 LOCAL_INSTALL=0
 NO_BROWSER=0
+NO_BROWSER_FLAG=0
 SKILL_PREFIX=1
 SKILL_PREFIX_FLAG=0
 while [ $# -gt 0 ]; do
@@ -40,7 +41,7 @@ while [ $# -gt 0 ]; do
     --local) LOCAL_INSTALL=1; shift ;;
     --prefix)    SKILL_PREFIX=1; SKILL_PREFIX_FLAG=1; shift ;;
     --no-prefix) SKILL_PREFIX=0; SKILL_PREFIX_FLAG=1; shift ;;
-    --no-browser|--nobrowser|--nobrowse|--no-browse) NO_BROWSER=1; shift ;;
+    --no-browser|--nobrowser|--nobrowse|--no-browse) NO_BROWSER=1; NO_BROWSER_FLAG=1; shift ;;
     *) shift ;;
   esac
 done
@@ -87,6 +88,18 @@ if [ "$SKILL_PREFIX_FLAG" -eq 0 ]; then
 else
   # Flag was passed explicitly — persist the choice
   "$GSTACK_CONFIG" set skill_prefix "$([ "$SKILL_PREFIX" -eq 1 ] && echo true || echo false)" 2>/dev/null || true
+fi
+
+# ─── Resolve no-browser preference ────────────────────────────
+# Priority: CLI flag > saved config
+if [ "$NO_BROWSER_FLAG" -eq 0 ]; then
+  _saved_no_browser="$("$GSTACK_CONFIG" get no_browser 2>/dev/null || true)"
+  if [ "$_saved_no_browser" = "true" ]; then
+    NO_BROWSER=1
+  fi
+else
+  # Flag was passed explicitly — persist the choice
+  "$GSTACK_CONFIG" set no_browser "$([ "$NO_BROWSER" -eq 1 ] && echo true || echo false)" 2>/dev/null || true
 fi
 
 # --local: install to .claude/skills/ in the current working directory
@@ -611,10 +624,18 @@ if [ "$INSTALL_CLAUDE" -eq 1 ]; then
     else
       echo "gstack ready (claude)."
     fi
-    echo "  browse: $BROWSE_BIN"
+    if [ "$NO_BROWSER" -eq 0 ]; then
+      echo "  browse: $BROWSE_BIN"
+    else
+      echo "  browse: skipped (--no-browser)"
+    fi
   else
     echo "gstack ready (claude)."
-    echo "  browse: $BROWSE_BIN"
+    if [ "$NO_BROWSER" -eq 0 ]; then
+      echo "  browse: $BROWSE_BIN"
+    else
+      echo "  browse: skipped (--no-browser)"
+    fi
     echo "  (skipped skill symlinks — not inside .claude/skills/)"
   fi
 fi
@@ -636,7 +657,11 @@ if [ "$INSTALL_CODEX" -eq 1 ]; then
   link_codex_skill_dirs "$SOURCE_GSTACK_DIR" "$CODEX_SKILLS"
 
   echo "gstack ready (codex)."
-  echo "  browse: $BROWSE_BIN"
+  if [ "$NO_BROWSER" -eq 0 ]; then
+    echo "  browse: $BROWSE_BIN"
+  else
+    echo "  browse: skipped (--no-browser)"
+  fi
   echo "  codex skills: $CODEX_SKILLS"
 fi
 
@@ -706,7 +731,11 @@ if [ "$INSTALL_KIRO" -eq 1 ]; then
           "$skill_dir/SKILL.md" > "$target_dir/SKILL.md"
     done
     echo "gstack ready (kiro)."
-    echo "  browse: $BROWSE_BIN"
+    if [ "$NO_BROWSER" -eq 0 ]; then
+      echo "  browse: $BROWSE_BIN"
+    else
+      echo "  browse: skipped (--no-browser)"
+    fi
     echo "  kiro skills: $KIRO_SKILLS"
   fi
 fi
