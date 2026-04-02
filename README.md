@@ -40,7 +40,7 @@ Fork it. Improve it. Make it yours. And if you want to hate on free open source 
 
 ## Install — 30 seconds
 
-**Requirements:** [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Git](https://git-scm.com/), [Bun](https://bun.sh/) v1.0+, [Node.js](https://nodejs.org/) ([Windows](#windows) only)
+**Requirements:** One supported host ([Claude Code](https://docs.anthropic.com/en/docs/claude-code), [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli), or another SKILL.md-compatible agent), [Git](https://git-scm.com/), [Bun](https://bun.sh/) v1.0+, [Node.js](https://nodejs.org/) ([Windows](#windows) only)
 
 ### Step 1: Install on your machine
 
@@ -58,6 +58,23 @@ Real files get committed to your repo (not a submodule), so `git clone` just wor
 > ```bash
 > git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
 > ```
+
+### GitHub Copilot CLI
+
+GitHub Copilot CLI officially supports skills from `.claude/skills` and
+`~/.claude/skills`, so the lowest-friction gstack install reuses the same
+Claude-compatible layout instead of introducing a separate Copilot-only tree.
+
+Install once for your user account:
+
+```bash
+git clone https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+cd ~/.claude/skills/gstack && ./setup --host copilot
+```
+
+For repo-local installs, vendoring gstack into `.claude/skills/gstack` works with
+Copilot CLI too. Put your guidance in `AGENTS.md` or `.github/copilot-instructions.md`,
+then use `/skills reload` if Copilot is already running.
 
 ### Codex, Gemini CLI, or Cursor
 
@@ -196,7 +213,7 @@ Each skill feeds into the next. `/office-hours` writes a design doc that `/plan-
 | `/canary` | **SRE** | Post-deploy monitoring loop. Watches for console errors, performance regressions, and page failures. |
 | `/benchmark` | **Performance Engineer** | Baseline page load times, Core Web Vitals, and resource sizes. Compare before/after on every PR. |
 | `/document-release` | **Technical Writer** | Update all project docs to match what you just shipped. Catches stale READMEs automatically. |
-| `/retro` | **Eng Manager** | Team-aware weekly retro. Per-person breakdowns, shipping streaks, test health trends, growth opportunities. `/retro global` runs across all your projects and AI tools (Claude Code, Codex, Gemini). |
+| `/retro` | **Eng Manager** | Team-aware weekly retro. Per-person breakdowns, shipping streaks, test health trends, growth opportunities. `/retro global` runs across all your projects and AI tools (Claude Code, Codex, Gemini, Copilot). |
 | `/browse` | **QA Engineer** | Give the agent eyes. Real Chromium browser, real clicks, real screenshots. ~100ms per command. `$B connect` launches your real Chrome as a headed window — watch every action live. |
 | `/setup-browser-cookies` | **Session Manager** | Import cookies from your real browser (Chrome, Arc, Brave, Edge) into the headless session. Test authenticated pages. |
 | `/autoplan` | **Review Pipeline** | One command, fully reviewed plan. Runs CEO → design → eng review automatically with encoded decision principles. Surfaces only taste decisions for your approval. |
@@ -301,6 +318,9 @@ Data is stored in [Supabase](https://supabase.com) (open source Firebase alterna
 **Want namespaced commands?** `cd ~/.claude/skills/gstack && ./setup --prefix` — switches from `/qa` to `/gstack-qa`. Useful if you run other skill packs alongside gstack.
 
 **Codex says "Skipped loading skill(s) due to invalid SKILL.md"?** Your Codex skill descriptions are stale. Fix: `cd ~/.codex/skills/gstack && git pull && ./setup --host codex` — or for repo-local installs: `cd "$(readlink -f .agents/skills/gstack)" && git pull && ./setup --host codex`
+
+**Copilot CLI doesn't see the skills?** Run `/skills list` or `/skills reload`. If you're using the Claude-compatible install path, rerun: `cd ~/.claude/skills/gstack && ./setup --host copilot`
+
 
 **Claude says it can't see the skills?** Make sure your project's `CLAUDE.md` has a gstack section. Add this:
 
